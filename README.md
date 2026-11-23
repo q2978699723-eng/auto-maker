@@ -40,6 +40,53 @@ examples/aftersales/               完整示例：电商售后 agent
 
 ## 安装
 
+### 方式一：一条命令（推荐）
+
+```bash
+pip install "git+https://github.com/q2978699723-eng/auto-maker.git"
+auto-maker install
+```
+
+`auto-maker` 会自动检测本机的 agent 目录并装到对应位置：
+
+| agent | 技能目录 |
+|---|---|
+| DeepSeek Harness | `~/.dsh/skills/` |
+| WorkBuddy | `~/.workbuddy/skills/` |
+| Codex | `~/.codex/skills/` |
+| Claude Code | `~/.claude/skills/` |
+
+常用参数：
+
+```bash
+auto-maker list                      # 看检测到哪些 agent、装了没有
+auto-maker install --target workbuddy # 只装 WorkBuddy
+auto-maker install --target all       # 全部装上
+auto-maker install --force            # 覆盖已安装
+auto-maker install --path /some/skills # 手动指定目录
+auto-maker uninstall --target workbuddy
+auto-maker doctor                     # 校验打包内容与已装副本
+```
+
+不想全局安装时：
+
+```bash
+pipx run --spec "git+https://github.com/q2978699723-eng/auto-maker.git" auto-maker install
+# 或
+uvx --from "git+https://github.com/q2978699723-eng/auto-maker.git" auto-maker install
+```
+
+### 方式二：手动复制
+
+```bash
+git clone https://github.com/q2978699723-eng/auto-maker.git
+cp -R auto-maker/skills/dsh-agent-builder ~/.dsh/skills/       # DeepSeek Harness
+cp -R auto-maker/skills/dsh-agent-builder ~/.workbuddy/skills/ # WorkBuddy
+```
+
+> **为什么装错目录会「看不见」**：每个 agent 只扫描自己的技能根目录。装进 `~/.dsh/skills` 只有 DeepSeek Harness 能看到；WorkBuddy 只读 `~/.workbuddy/skills`。两个产品的 skill 格式相同（`SKILL.md` + YAML frontmatter），差别只在目录。
+
+
 ### 1. 装 skill
 
 ```sh

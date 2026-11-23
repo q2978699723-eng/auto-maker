@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auto-maker-skill"
+version = "1.0.0"
+description = "Install the dsh-agent-builder skill into DeepSeek Harness, WorkBuddy, Codex or Claude skill directories."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "q2978699723-eng" }]
+keywords = ["agent", "skill", "deepseek-harness", "workbuddy", "installer"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.scripts]
+auto-maker = "auto_maker.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/q2978699723-eng/auto-maker"
+Repository = "https://github.com/q2978699723-eng/auto-maker"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+auto_maker = ["data/*.tar.gz"]

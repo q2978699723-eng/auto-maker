@@ -41,6 +41,53 @@ examples/aftersales/               complete example: e-commerce after-sales agen
 
 ## Install
 
+### Option 1: one command (recommended)
+
+```bash
+pip install "git+https://github.com/q2978699723-eng/auto-maker.git"
+auto-maker install
+```
+
+`auto-maker` detects every agent home on this machine and installs into each one:
+
+| Agent | Skill directory |
+|---|---|
+| DeepSeek Harness | `~/.dsh/skills/` |
+| WorkBuddy | `~/.workbuddy/skills/` |
+| Codex | `~/.codex/skills/` |
+| Claude Code | `~/.claude/skills/` |
+
+Common flags:
+
+```bash
+auto-maker list                       # what is detected and installed
+auto-maker install --target workbuddy # only WorkBuddy
+auto-maker install --target all       # every known agent
+auto-maker install --force            # overwrite
+auto-maker install --path /some/skills
+auto-maker uninstall --target workbuddy
+auto-maker doctor                     # validate the packaged copy
+```
+
+No global install needed:
+
+```bash
+pipx run --spec "git+https://github.com/q2978699723-eng/auto-maker.git" auto-maker install
+# or
+uvx --from "git+https://github.com/q2978699723-eng/auto-maker.git" auto-maker install
+```
+
+### Option 2: copy by hand
+
+```bash
+git clone https://github.com/q2978699723-eng/auto-maker.git
+cp -R auto-maker/skills/dsh-agent-builder ~/.dsh/skills/       # DeepSeek Harness
+cp -R auto-maker/skills/dsh-agent-builder ~/.workbuddy/skills/ # WorkBuddy
+```
+
+> **Why the wrong directory makes it invisible**: each agent scans only its own skill root. A copy in `~/.dsh/skills` is visible to DeepSeek Harness only; WorkBuddy reads `~/.workbuddy/skills`. The formats are identical (`SKILL.md` + YAML frontmatter) — only the location differs.
+
+
 ### 1. Install the skill
 
 ```sh
