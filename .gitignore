@@ -1,11 +1,6 @@
 # macOS
 .DS_Store
 
-# editors
-.vscode/
-.idea/
-*.swp
-
 # node
 node_modules/
 npm-debug.log*
@@ -14,18 +9,17 @@ pnpm-debug.log*
 # DSH runtime — never commit
 .dsh/
 *.credentials.yaml
-**/.credentials.yaml
 .env
 .env.*
-!.env.example
 agent-memory/
 *.jsonl
 
-# local build output
+# build output
 dist/
 *.zip
 *.tgz
 
-# OS/temp
-*.tmp
-*~
+# editors
+.vscode/
+.idea/
+*.swp
