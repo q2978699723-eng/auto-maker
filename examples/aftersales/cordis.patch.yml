@@ -1,4 +1,4 @@
-# dsh bundle patch: 售后助手 v2（按 SPEC.md 38 项定义生成）。
+# dsh bundle patch: 售后助手 v2（按 SPEC.md 48 项定义生成）。
 #
 # 域 1–4, 7–9, P34 → persona
 # 域 5            → 工具裁剪（只三件，无 shell/fs/web）+ 写工具前置确认

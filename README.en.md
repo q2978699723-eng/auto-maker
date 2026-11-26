@@ -1,38 +1,45 @@
 # dsh-agent-builder
 
-Turn a one-line business requirement into an **acceptance-ready agent product spec** (38 items), then generate and install a **DeepSeek Harness (DSH)** agent preset from it.
-
-For product managers: no Cordis plugins, no YAML — just answer business questions.
-For engineers: the output is a reviewable preset bundle plus normalized tool code.
-
 [中文](./README.md) | English
+
+**Configure and ship an agent for a concrete business scenario.**
+
+It settles the business requirements item by item (or takes the definition you already wrote), then produces the full configuration — persona, on-demand knowledge, pre-step checks, intent routing, business tools, permission and approval gates, delegation and compaction — packages it into an installable preset bundle, installs it, and verifies it against acceptance cases.
+
+For product managers: no plugin knowledge, no YAML — just answer business questions.
+For engineers: the output is a reviewable bundle, normalized tool code, and a re-runnable acceptance record.
 
 ## What it solves
 
-An "agent" in DSH is not a prompt; it is a composition of plugin rows: persona, tools, boundaries, memory, knowledge, task flow, failure handling, and acceptance criteria. The hard part is not writing YAML — it is **making the product definition explicit**:
+An "agent" here is not a config file; it is a composition of plugin rows. The hard part is threefold:
 
-- Who is it for? Which class of problem? What does it explicitly *not* do?
-- How does a task start, finish, and fail?
-- What may it execute on its own? What needs human approval? What must it never say?
-- For each tool: when to call, inputs, outputs, failure semantics, side effects?
-- What to remember, what to never remember, for how long, when to recall?
-- Which document is authoritative? What wins on conflict? What if there is no answer?
+1. **Make the business explicit**: who it serves, what it must not do, what requires a human, how failures are reported, how you prove it works.
+2. **Translate the definition into modules**: what belongs in persona, what belongs in on-demand skills, what must become an `agent/pre-step` or `tools/pre-execute` gate.
+3. **Accept that a prompt is not an enforcement mechanism**: a rule written only in the prompt is "usually followed", not "cannot happen". Critical constraints belong in code gates or entry-layer interception.
 
-This skill uses **38 definition items + four evidence levels + 7 mandatory decision groups** to settle those, produce `SPEC.md`, then translate it into DSH configuration.
+This skill settles all of that with **48 definition items (ten business domains + an engineering-gate domain) + four evidence levels + 7 mandatory decision groups**, produces `SPEC.md`, then translates it into installable configuration.
+
+## Two modes
+
+| Your situation | Which path |
+|---|---|
+| Only a one-line business description | **Interview mode**: settle one domain at a time, writing `SPEC.md` as you go |
+| A definition / a SPEC / "stop asking, just build it" | **Execution mode**: gap scan → ask only blockers → build, install, verify |
 
 ## Layout
 
 ```
 skills/dsh-agent-builder/          the installable skill
-├── SKILL.md                       main flow (10 domains / 38 items / evidence rules)
+├── SKILL.md                       main flow (dual mode, 48 items, module assembly, engineering rules)
 └── references/
-    ├── definition-38.md           38 items: question / typical answer / criterion / mapping
-    ├── module-map.md              DSH package names and config fields (verified 0.2.2-rc.5)
+    ├── definition-48.md           48 items: question / typical answer / criterion / mapping
+    ├── engineering-execution.md   bundle layout, tool template, three gates, 12 acceptance cases, DoD
+    ├── module-map.md              package names and config fields (verified 0.2.2-rc.5)
     ├── preset-format.md           output format, custom tool rules, install & verify
     └── spec-template.md           SPEC.md template
 
 examples/aftersales/               complete example: e-commerce after-sales agent
-├── SPEC.md                        all 38 items filled in
+├── SPEC.md                        all 48 items filled in
 ├── cordis.patch.yml               preset declaration (persona/tools/memory/knowledge)
 ├── index.js                       three business tools (verification + structured error codes)
 ├── AGENTS.example.md              long-lived constraints + after-sales policy
@@ -87,24 +94,14 @@ cp -R auto-maker/skills/dsh-agent-builder ~/.workbuddy/skills/ # WorkBuddy
 
 > **Why the wrong directory makes it invisible**: each agent scans only its own skill root. A copy in `~/.dsh/skills` is visible to DeepSeek Harness only; WorkBuddy reads `~/.workbuddy/skills`. The formats are identical (`SKILL.md` + YAML frontmatter) — only the location differs.
 
-
-### 1. Install the skill
-
-```sh
-mkdir -p ~/.dsh/skills
-cp -R skills/dsh-agent-builder ~/.dsh/skills/
-```
-
-DSH discovers `~/.dsh/skills/` automatically (user scope, all sessions). A workspace-level `.dsh/skills/` also works and takes precedence.
-
-### 2. Try the example agent
+### Try the example agent
 
 ```sh
 cp examples/aftersales/AGENTS.example.md ./AGENTS.md   # agent reads it every turn
 mkdir -p ~/.dsh/agent-memory                            # memory file location
 ```
 
-Then install the preset from a DSH session:
+Then install the preset from a session:
 
 ```
 plugin_manager install_bundle { target: "<repo>/examples/aftersales" }
@@ -119,35 +116,39 @@ Tell the agent:
 > I want an AI customer-service agent for e-commerce after-sales.
 
 The skill will:
+
 1. restate and decompose the requirement
-2. interview you across 10 domains (3–6 questions each, with defaults and typical answers)
-3. restate each domain's conclusion, writing answers into `SPEC.md`
+2. interview you across 10 business domains (3–6 questions each, with defaults and typical answers)
+3. restate each domain's conclusion, writing answers into `SPEC.md` immediately
 4. run a fitness check (strongly consistent real-time data / irrevocable commitments / actually just knowledge Q&A)
-5. generate `package.json` + `cordis.patch.yml` + `index.js`
-6. install and verify, reporting **Proven / Not proven / Blockers**
+5. settle the engineering-gate domain (rule placement, conflict precedence, failure direction, permission granularity, delegation, compaction, loop caps, large results)
+6. generate `package.json` + `cordis.patch.yml` + `index.js`
+7. install and verify, reporting **Proven / Not proven / Blockers**
 
-## Three hard-won constraints
+## Three hard constraints
 
-1. **A profile-installed plugin cannot `import '@deepseek-ai/dsh-tools'`** — that package lives in the DSH installation, not the profile's `node_modules`; `defineTool` fails with `ERR_MODULE_NOT_FOUND`. Pass a plain object to `ctx.tools.register()` instead.
+1. **A profile-installed plugin cannot `import '@deepseek-ai/dsh-tools'`** — that package lives in the installation directory, not the profile's `node_modules`; `defineTool` fails with `ERR_MODULE_NOT_FOUND`. Pass a plain object to `ctx.tools.register()` instead.
 2. **`parameters` is standard JSON Schema** — `type: 'object'` + `properties` + a `required` array.
 3. **`output.schema` and `output.render` are both mandatory.**
 
 ## Known limits
 
-- **Presets only compose in Web/Desktop.** `dsh headless` and `dsh acp` explicitly mount no preset roster (source comment: "This bundle composes no preset roster"), so CLI cannot exercise a preset-selected session. Final UAT must happen in a new Web session.
-- Tools and memory *can* be verified by temporarily mounting them globally in headless.
+- **Presets only compose in Web/Desktop.** `dsh headless` and `dsh acp` mount no preset roster, so CLI cannot exercise a preset-selected session. Final UAT must happen in a new Web session.
+- **`agent/pre-step` can only reject or rewrite messages** — it cannot send a fixed reply. Zero-model "route straight to human" must live at the entry layer.
 - The example uses mock data; replace `ORDERS`/`REFUNDS` and the `execute` bodies to hit a real system.
 
 ## Evidence discipline
 
-Four evidence levels; deliverables must keep them apart:
+Deliverables must keep "proven" and "not proven" apart:
 
 | Tag | What it establishes | What it must not be stretched into |
 |---|---|---|
-| source-verified | DSH has this field/mechanism | this agent is tested |
+| source-verified | the runtime has this field/mechanism | this agent is tested |
 | observed | this run produced this result | holds for every model/environment |
 | engineering inference | a grounded but unverified explanation | located and fixed |
-| to-be-decided | a product choice only the PM can make | enabled by default |
+| to-be-decided | a choice only the business owner can make | enabled by default |
+
+**"Installed" is not "accepted".**
 
 ## License
 

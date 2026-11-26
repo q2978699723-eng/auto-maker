@@ -1,6 +1,6 @@
 # 模块地图
 
-只列本机 DSH 0.2.2-rc.5 里真实存在的包。`Config` 列表示该行接受 `config` 映射。
+只列本机运行时（0.2.2-rc.5）里真实存在的包。`Config` 列表示该行接受 `config` 映射。
 
 ## 人设
 
@@ -28,7 +28,7 @@
 
 ## 记忆
 
-DSH **没有**内置的「用户记忆」数据库，记忆靠这三条路，按需要选：
+本运行时 **没有**内置的「用户记忆」数据库，记忆靠这三条路，按需要选：
 
 | 方式 | 怎么接 | 适合 |
 |---|---|---|
@@ -50,7 +50,7 @@ MCP 记忆的最小行：
       MEMORY_FILE_PATH: !!js process.env.HOME + '/.dsh-memory.jsonl'
 ```
 
-MCP 工具会以 `mcp__memory__<tool>` 出现在模型面前。上游服务需自行安装/常驻，DSH 不代管。
+MCP 工具会以 `mcp__memory__<tool>` 出现在模型面前。上游服务需自行安装/常驻，运行时不管。
 
 ## 知识
 
@@ -66,8 +66,48 @@ MCP 工具会以 `mcp__memory__<tool>` 出现在模型面前。上游服务需�
 |---|---|
 | 工具白名单 | preset 里只列该有的行——**没挂的工具模型根本调不到**，这是最强的一道 |
 | 文件沙箱 | `@deepseek-ai/dsh-sandbox-policy` 的 `mode`：`read-only` / `workspace-write` |
+| 命令沙箱 | `@deepseek-ai/dsh-bash-sandbox`，与 `dsh-tool-bash` 配对 |
 | 审批 | `@deepseek-ai/dsh-user-approval` + `@deepseek-ai/dsh-permission-presets`，敏感动作走人工确认 |
+| 自动审查 | `@deepseek-ai/dsh-experimental-auto-review`：逐工具 LLM 授权审查（Auto 档位），**实验包** |
+| 干跑 | `@deepseek-ai/dsh-plan-mode`：先只读探索、人工审阅后再执行 |
 | 提示词约束 | 写在 persona 的 `prefix` 里：不承诺、不报价、不判定责任、涉资金转人工 |
+
+**权限分层**：工具白名单是「模型看不到」，沙箱是「看得到但落不了地」，审批是「能落地但要人点」。三层不可互相替代。
+
+## 工程闸门（域 11 对应）
+
+| 包 | Config | 说明 |
+|---|---|---|
+| `@deepseek-ai/dsh-spill-policy` | yes | 大结果溢出：超预算的结果存文件、给模型路径 + 预览（P48） |
+| `@deepseek-ai/dsh-spill-local` | yes | 溢出的本地存储实现（私有、按会话） |
+| `@deepseek-ai/dsh-tool-call-timeout-policy` | no | 逐工具超时，超时返回 `TOOL_TIMEOUT`（P47） |
+| `@deepseek-ai/dsh-repeat-tool-reminder` | yes | 重复调用提醒；**只提醒不阻断**，真上限要自己写（P47） |
+| `@deepseek-ai/dsh-session-checkpoint-policy` | no | 模型请求与工具副作用前的持久化检查点 |
+
+## 上下文与压缩
+
+| 包 | Config | 说明 |
+|---|---|---|
+| `@deepseek-ai/dsh-compaction-basic` | yes | 按 token 水位触发的压缩策略 + LLM 摘要后端 |
+| `@deepseek-ai/dsh-compaction-tool-result-pruner` | yes | 免模型的 head/middle/tail 裁剪，先于 LLM 压缩跑 |
+| `@deepseek-ai/dsh-token-meter` | yes | 上下文压力测量（`contextPressure`） |
+
+压缩是有顺序的流水线：先免模型裁剪，再 LLM 摘要。顺序错了会出现「压了但阈值仍超限」。
+
+## 委派与编排
+
+| 包 | Config | 说明 |
+|---|---|---|
+| `@deepseek-ai/dsh-subagent` | yes | 子 agent 注册与生命周期 |
+| `@deepseek-ai/dsh-subagent-spawn-in-process` | yes | 全新上下文子 agent |
+| `@deepseek-ai/dsh-subagent-fork-in-process` | yes | 继承父会话前缀的子 agent |
+| `@deepseek-ai/dsh-tool-subagent` | yes | 模型可调用的委派工具 |
+| `@deepseek-ai/dsh-tool-subagent-control` | yes | 子 agent 消息、打断、发现 |
+| `@deepseek-ai/dsh-agent-team` | yes | 子 agent 树共享任务 DAG |
+| `@deepseek-ai/dsh-tool-agent-team` | yes | 模型可调用的看板工具 |
+| `@deepseek-ai/dsh-tool-workflow` | yes | JS 编排脚本，扇出多个子 agent |
+
+委派是同时的隔离手段与权限手段：子 agent 有独立上下文、工具集、模型。**深度与并发都要设上限**（P44）。
 
 ## 模型
 

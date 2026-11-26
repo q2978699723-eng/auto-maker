@@ -77,7 +77,7 @@
 
 只在业务动作没有现成接口时才写。
 
-> **重要：profile 里的插件无法 `import '@deepseek-ai/dsh-tools'`。** 该包只在 DSH 安装目录里，profile 的 `node_modules` 解析不到，用 `defineTool` 会报 `ERR_MODULE_NOT_FOUND`。**不要 import 任何 `@deepseek-ai/*` 包**，直接传普通对象给 `ctx.tools.register()`——已在本机实测通过。
+> **重要：profile 里的插件无法 `import '@deepseek-ai/dsh-tools'`。** 该包只在运行时安装目录里，profile 的 `node_modules` 解析不到，用 `defineTool` 会报 `ERR_MODULE_NOT_FOUND`。**不要 import 任何 `@deepseek-ai/*` 包**，直接传普通对象给 `ctx.tools.register()`——已在本机实测通过。
 
 ```js
 export const name = 'agent-tools'
